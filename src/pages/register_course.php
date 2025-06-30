@@ -1,9 +1,9 @@
 <?php
-require_once 'config.php';
+require_once '../config/config.php';
 
 // Check if user is logged in and is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
-    header('Location: index.php');
+    header('Location: ../auth/index.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ if (isset($_POST['register_course'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Course - Course Registration System</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 
 <body>
@@ -54,7 +54,7 @@ if (isset($_POST['register_course'])) {
                 <li><a href="register_course.php">Register Course</a></li>
                 <li><a href="my_courses.php">My Courses</a></li>
                 <li><a href="about.php">About</a></li>
-                <li><a href="logout.php">Logout</a></li>
+                <li><a href="../auth/logout.php">Logout</a></li>
             </ul>
         </div>
     </nav>

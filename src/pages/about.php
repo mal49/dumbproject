@@ -1,4 +1,4 @@
-<?php require_once 'config.php'; ?>
+<?php require_once '../config/config.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - Course Registration System</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 
 <body>
@@ -29,7 +29,7 @@
                         <li><a href="lecturer_dashboard.php">Dashboard</a></li>
                     <?php endif; ?>
                     <li><a href="about.php">About</a></li>
-                    <li><a href="logout.php">Logout</a></li>
+                    <li><a href="../auth/logout.php">Logout</a></li>
                 </ul>
             </div>
         </nav>
@@ -135,6 +135,25 @@
         </div>
 
         <div class="card">
+            <h3>🍪 Lab 9 - Cookie Features</h3>
+            <p>This system now includes advanced cookie functionality for Lab 9 PHP exercise:</p>
+            <ul>
+                <li><strong>Remember Me:</strong> Stay logged in for up to 30 days</li>
+                <li><strong>Auto-Login:</strong> Automatic login when returning to the site</li>
+                <li><strong>Cookie Security:</strong> HTTPOnly flags for enhanced security</li>
+                <li><strong>Cookie Management:</strong> Proper cookie clearing on logout</li>
+                <li><strong>Cookie Demonstration:</strong> Interactive cookie testing and viewing</li>
+            </ul>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="../examples/cookie_demo.php" class="btn"
+                    style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    🍪 View Cookie Demonstration
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>Technical Information</h3>
             <p>This system is built using:</p>
             <ul>
@@ -159,7 +178,7 @@
 
         <?php if (!isset($_SESSION['user_id'])): ?>
             <div class="text-center mt-20">
-                <a href="index.php" class="btn">Go to Login Page</a>
+                <a href="../auth/index.php" class="btn">Go to Login Page</a>
             </div>
         <?php endif; ?>
     </div>
