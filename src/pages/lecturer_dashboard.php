@@ -144,11 +144,13 @@ if (isset($_POST['action_request'])) {
                                     <form method="POST" style="display: inline;">
                                         <input type="hidden" name="drop_id" value="<?php echo $request['drop_id']; ?>">
                                         <button type="submit" name="action_request" value="approve" class="btn btn-success"
+                                            style="min-width: 80px; padding: 8px 12px; margin-bottom: 5px;"
                                             onclick="return confirm('Are you sure you want to approve this drop request?')">Approve</button>
                                     </form>
-                                    <form method="POST" style="display: inline; margin-left: 5px;">
+                                    <form method="POST" style="display: inline; margin-left: 15px;">
                                         <input type="hidden" name="drop_id" value="<?php echo $request['drop_id']; ?>">
                                         <button type="submit" name="action_request" value="reject" class="btn btn-danger"
+                                            style="min-width: 80px; padding: 8px 12px;"
                                             onclick="return confirm('Are you sure you want to reject this drop request?')">Reject</button>
                                     </form>
                                 </td>
