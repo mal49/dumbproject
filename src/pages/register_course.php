@@ -3,7 +3,7 @@ require_once '../config/config.php';
 
 // Check if user is logged in and is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
-    header('Location: ../auth/index.php');
+    header('Location: ../../index.php');
     exit;
 }
 
@@ -13,6 +13,75 @@ if (isset($_POST['register_course'])) {
     $is_repeat = isset($_POST['is_repeat']) ? 1 : 0;
 
     try {
+        // Check pre-requisites using the correct column name
+        $stmt = $pdo->prepare("
+            SELECT cp.preequisite as prerequisite_code, c.course_name 
+            FROM course_prerequisite cp
+            JOIN course c ON cp.preequisite = c.course_code
+            WHERE cp.course_code = ?
+            AND cp.preequisite NOT IN (
+                SELECT course_code FROM passed_courses WHERE student_id = ?
+            )
+        ");
+        $stmt->execute([$course_code, $_SESSION['user_id']]);
+        $missing_prerequisite = $stmt->fetchAll();
+
+        if (!empty($missing_prerequisite)) {
+            $error_message = "You haven't completed the following pre-requisites:<ul>";
+            foreach ($missing_prerequisite as $prereq) {
+                $error_message .= "<li>" . htmlspecialchars($prereq['prerequisite_code']) . " - " . htmlspecialchars($prereq['course_name']) . "</li>";
+            }
+            $error_message .= "</ul>";
+            throw new Exception($error_message);
+        }
+
+        // Check if already registered for this course in current semester
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as count
+            FROM add_drop_application ada
+            JOIN course_add ca ON ada.application_id = ca.application_id
+            WHERE ada.student_id = ? AND ca.course_code = ?
+            AND YEAR(ada.application_date) = YEAR(CURDATE())
+            AND (
+                (MONTH(ada.application_date) BETWEEN 1 AND 5 AND MONTH(CURDATE()) BETWEEN 1 AND 5) OR
+                (MONTH(ada.application_date) BETWEEN 6 AND 12 AND MONTH(CURDATE()) BETWEEN 6 AND 12)
+            )
+        ");
+        $stmt->execute([$_SESSION['user_id'], $course_code]);
+        $result = $stmt->fetch();
+
+        if ($result['count'] > 0) {
+            throw new Exception("You are already registered for this course in the current semester.");
+        }
+
+        // Check current semester credit hours
+        $stmt = $pdo->prepare("
+            SELECT SUM(c.credit_hour) as total_credits
+            FROM add_drop_application ada
+            JOIN course_add ca ON ada.application_id = ca.application_id
+            JOIN course c ON ca.course_code = c.course_code
+            WHERE ada.student_id = ?
+            AND YEAR(ada.application_date) = YEAR(CURDATE())
+            AND (
+                (MONTH(ada.application_date) BETWEEN 1 AND 5 AND MONTH(CURDATE()) BETWEEN 1 AND 5) OR
+                (MONTH(ada.application_date) BETWEEN 6 AND 12 AND MONTH(CURDATE()) BETWEEN 6 AND 12)
+            )
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $credits = $stmt->fetch();
+
+        $current_credits = $credits['total_credits'] ?? 0;
+
+        // Get new course credit hours
+        $stmt = $pdo->prepare("SELECT credit_hour FROM course WHERE course_code = ?");
+        $stmt->execute([$course_code]);
+        $course = $stmt->fetch();
+        $new_credits = $current_credits + $course['credit_hour'];
+
+        if ($new_credits > 21) {
+            throw new Exception("Cannot register: Total credit hours ($new_credits) would exceed maximum limit of 21 credits per semester.");
+        }
+
         // Create new application
         $application_id = 'APP' . time() . rand(100, 999);
         $stmt = $pdo->prepare("INSERT INTO add_drop_application (application_id, student_id, application_date) VALUES (?, ?, CURDATE())");
@@ -24,8 +93,15 @@ if (isset($_POST['register_course'])) {
         $stmt->execute([$add_id, $application_id, $course_code, $is_repeat]);
 
         $success_message = "Course registered successfully!";
+
+        if ($new_credits < 12) {
+            $success_message .= "<br><div class='alert alert-warning'>Warning: You're registering for only $new_credits credit hours this semester. The minimum requirement is 12 credit hours.</div>";
+        }
+
     } catch (PDOException $e) {
         $error_message = "Registration failed: " . $e->getMessage();
+    } catch (Exception $e) {
+        $error_message = $e->getMessage();
     }
 }
 ?>
@@ -108,13 +184,14 @@ if (isset($_POST['register_course'])) {
             </table>
         </div>
 
-        <!-- Registration Modal -->
+        <!-- Registration modal with pre-requisites -->
         <div id="registrationModal"
             style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
             <div
-                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 400px; width: 90%;">
+                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
                 <h3>Register for Course</h3>
-                <form method="POST">
+                <div id="prerequisiteInfo" style="margin-bottom: 15px;"></div>
+                <form method="POST" id="registrationForm">
                     <div class="form-group">
                         <label>Course Code:</label>
                         <input type="text" id="modalCourseCode" name="course_code" readonly
@@ -134,7 +211,7 @@ if (isset($_POST['register_course'])) {
                     </div>
 
                     <div style="text-align: center; margin-top: 20px;">
-                        <button type="submit" name="register_course" class="btn btn-success">Confirm
+                        <button type="submit" name="register_course" class="btn btn-success" id="confirmButton">Confirm
                             Registration</button>
                         <button type="button" onclick="closeModal()" class="btn"
                             style="margin-left: 10px;">Cancel</button>
@@ -154,11 +231,41 @@ if (isset($_POST['register_course'])) {
         function registerCourse(courseCode, courseName) {
             document.getElementById('modalCourseCode').value = courseCode;
             document.getElementById('modalCourseName').value = courseName;
+
+            // Show loading message
+            document.getElementById('prerequisiteInfo').innerHTML = '<div class="alert">Loading prerequisites...</div>';
             document.getElementById('registrationModal').style.display = 'block';
+
+            // Fetch pre-requisites for this course
+            fetch('get_prerequisite.php?course_code=' + encodeURIComponent(courseCode))
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('prerequisiteInfo').innerHTML = data;
+
+                    // Check if there are incomplete prerequisites
+                    if (data.includes('Not Completed') || data.includes('must complete all prerequisites')) {
+                        document.getElementById('confirmButton').disabled = true;
+                        document.getElementById('confirmButton').style.backgroundColor = '#ccc';
+                        document.getElementById('confirmButton').style.cursor = 'not-allowed';
+                    } else {
+                        document.getElementById('confirmButton').disabled = false;
+                        document.getElementById('confirmButton').style.backgroundColor = '#28a745';
+                        document.getElementById('confirmButton').style.cursor = 'pointer';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('prerequisiteInfo').innerHTML = '<div class="alert alert-danger">Error loading prerequisites. Please try again.</div>';
+                });
         }
 
         function closeModal() {
             document.getElementById('registrationModal').style.display = 'none';
+            // Reset form
+            document.getElementById('registrationForm').reset();
+            document.getElementById('confirmButton').disabled = false;
+            document.getElementById('confirmButton').style.backgroundColor = '#28a745';
+            document.getElementById('confirmButton').style.cursor = 'pointer';
         }
 
         // Close modal when clicking outside
