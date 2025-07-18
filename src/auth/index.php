@@ -397,113 +397,134 @@
                 ?>
 
                 <form method="POST" id="signupForm_form" onsubmit="return validateSignupForm()">
-                    <div class="form-group">
-                        <label for="name">Full Name:</label>
-                        <input type="text" name="name" id="name" required
-                            value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>">
-                        <small class="form-text">Must contain only letters and spaces, 2-100 characters</small>
+                    <!-- Row 1: Name and Email -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Full Name:</label>
+                            <input type="text" name="name" id="name" required
+                                value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>">
+                            <small class="form-text">Must contain only letters and spaces, 2-100 characters</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" name="email" id="email" required
+                                value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                            <small class="form-text">Must be a valid email address</small>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" name="email" id="email" required
-                            value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-                        <small class="form-text">Must be a valid email address</small>
+                    <!-- Row 2: Password and Faculty -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" name="password" id="password" required>
+                            <small class="form-text">At least 6 characters with uppercase, lowercase, and number</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="faculty_code">Faculty:</label>
+                            <select name="faculty_code" required>
+                                <option value="">Select Faculty</option>
+                                <option value="KPPIM" <?php echo (isset($_POST['faculty_code']) && $_POST['faculty_code'] === 'KPPIM') ? 'selected' : ''; ?>>KPPIM - Kolej Pengajian
+                                    Pengkomputeran, Informatik dan Matematik
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="password">Password:</label>
-                        <input type="password" name="password" id="password" required>
-                        <small class="form-text">At least 6 characters with uppercase, lowercase, and number</small>
+                    <!-- Row 3: Programme and Campus -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="programme_code">Programme:</label>
+                            <select name="programme_code" required>
+                                <option value="">Select Programme</option>
+                                <option value="CS110" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS110') ? 'selected' : ''; ?>>CS110 - Diploma of
+                                    Computer
+                                    Science</option>
+                                <option value="CS230" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS230') ? 'selected' : ''; ?>>CS230 - Bachelor Degree in
+                                    Computer Science</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="campus">Campus:</label>
+                            <select name="campus" required>
+                                <option value="">Select Campus</option>
+                                <option value="Shah Alam" <?php echo (isset($_POST['campus']) && $_POST['campus'] === 'Shah Alam') ? 'selected' : ''; ?>>Shah Alam</option>
+                                <option value="Melaka" <?php echo (isset($_POST['campus']) && $_POST['campus'] === 'Melaka') ? 'selected' : ''; ?>>Melaka</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="faculty_code">Faculty:</label>
-                        <select name="faculty_code" required>
-                            <option value="">Select Faculty</option>
-                            <option value="KPPIM" <?php echo (isset($_POST['faculty_code']) && $_POST['faculty_code'] === 'KPPIM') ? 'selected' : ''; ?>>KPPIM - Kolej Pengajian
-                                Pengkomputeran, Informatik dan Matematik
-                            </option>
-                        </select>
+                    <!-- Row 4: Semester and Gender -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="semester">Semester:</label>
+                            <input type="number" name="semester" min="1" max="8" required
+                                value="<?php echo isset($_POST['semester']) ? htmlspecialchars($_POST['semester']) : ''; ?>">
+                            <small class="form-text">Enter a number between 1 and 8</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gender">Gender:</label>
+                            <select name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male" <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'Male') ? 'selected' : ''; ?>>Male</option>
+                                <option value="Female" <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'Female') ? 'selected' : ''; ?>>Female</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="programme_code">Programme:</label>
-                        <select name="programme_code" required>
-                            <option value="">Select Programme</option>
-                            <option value="CS110" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS110') ? 'selected' : ''; ?>>CS110 - Diploma of Computer
-                                Science</option>
-                            <option value="CS230" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS230') ? 'selected' : ''; ?>>CS230 - Bachelor Degree in
-                                Computer Science</option>
-                        </select>
+                    <!-- Row 5: Level and Mode of Study -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="level_of_study">Level of Study:</label>
+                            <select name="level_of_study" required>
+                                <option value="">Select Level</option>
+                                <option value="Diploma" <?php echo (isset($_POST['level_of_study']) && $_POST['level_of_study'] === 'Diploma') ? 'selected' : ''; ?>>Diploma</option>
+                                <option value="Degree" <?php echo (isset($_POST['level_of_study']) && $_POST['level_of_study'] === 'Degree') ? 'selected' : ''; ?>>Degree</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mode_of_study">Mode of Study:</label>
+                            <select name="mode_of_study" required>
+                                <option value="">Select Mode</option>
+                                <option value="Full-time" <?php echo (isset($_POST['mode_of_study']) && $_POST['mode_of_study'] === 'Full-time') ? 'selected' : ''; ?>>Full-time</option>
+                                <option value="Part-time" <?php echo (isset($_POST['mode_of_study']) && $_POST['mode_of_study'] === 'Part-time') ? 'selected' : ''; ?>>Part-time</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="campus">Campus:</label>
-                        <select name="campus" required>
-                            <option value="">Select Campus</option>
-                            <option value="Shah Alam" <?php echo (isset($_POST['campus']) && $_POST['campus'] === 'Shah Alam') ? 'selected' : ''; ?>>Shah Alam</option>
-                            <option value="Melaka" <?php echo (isset($_POST['campus']) && $_POST['campus'] === 'Melaka') ? 'selected' : ''; ?>>Melaka</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="semester">Semester:</label>
-                        <input type="number" name="semester" min="1" max="8" required
-                            value="<?php echo isset($_POST['semester']) ? htmlspecialchars($_POST['semester']) : ''; ?>">
-                        <small class="form-text">Enter a number between 1 and 8</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="gender">Gender:</label>
-                        <select name="gender" required>
-                            <option value="">Select Gender</option>
-                            <option value="Male" <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'Male') ? 'selected' : ''; ?>>Male</option>
-                            <option value="Female" <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'Female') ? 'selected' : ''; ?>>Female</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="level_of_study">Level of Study:</label>
-                        <select name="level_of_study" required>
-                            <option value="">Select Level</option>
-                            <option value="Diploma" <?php echo (isset($_POST['level_of_study']) && $_POST['level_of_study'] === 'Diploma') ? 'selected' : ''; ?>>Diploma</option>
-                            <option value="Degree" <?php echo (isset($_POST['level_of_study']) && $_POST['level_of_study'] === 'Degree') ? 'selected' : ''; ?>>Degree</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="mode_of_study">Mode of Study:</label>
-                        <select name="mode_of_study" required>
-                            <option value="">Select Mode</option>
-                            <option value="Full-time" <?php echo (isset($_POST['mode_of_study']) && $_POST['mode_of_study'] === 'Full-time') ? 'selected' : ''; ?>>Full-time</option>
-                            <option value="Part-time" <?php echo (isset($_POST['mode_of_study']) && $_POST['mode_of_study'] === 'Part-time') ? 'selected' : ''; ?>>Part-time</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
+                    <!-- Full width: Mailing Address -->
+                    <div class="form-group full-width">
                         <label for="mailing_address">Mailing Address:</label>
                         <input type="text" name="mailing_address" required
                             value="<?php echo isset($_POST['mailing_address']) ? htmlspecialchars($_POST['mailing_address']) : ''; ?>">
                         <small class="form-text">At least 10 characters, maximum 255 characters</small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="postcode">Postcode:</label>
-                        <input type="text" name="postcode" required pattern="[0-9]{5}" placeholder="e.g., 40000"
-                            value="<?php echo isset($_POST['postcode']) ? htmlspecialchars($_POST['postcode']) : ''; ?>">
-                        <small class="form-text">Must be exactly 5 digits</small>
+                    <!-- Row 6: Postcode and Mobile Phone -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="postcode">Postcode:</label>
+                            <input type="text" name="postcode" required pattern="[0-9]{5}" placeholder="e.g., 40000"
+                                value="<?php echo isset($_POST['postcode']) ? htmlspecialchars($_POST['postcode']) : ''; ?>">
+                            <small class="form-text">Must be exactly 5 digits</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mobile_phone">Mobile Phone:</label>
+                            <input type="text" name="mobile_phone" required pattern="01[0-9]-[0-9]{7,8}"
+                                placeholder="e.g., 012-3456789"
+                                value="<?php echo isset($_POST['mobile_phone']) ? htmlspecialchars($_POST['mobile_phone']) : ''; ?>">
+                            <small class="form-text">Format: 01X-XXXXXXX or 01X-XXXXXXXX (Malaysian format)</small>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="mobile_phone">Mobile Phone:</label>
-                        <input type="text" name="mobile_phone" required pattern="01[0-9]-[0-9]{7,8}"
-                            placeholder="e.g., 012-3456789"
-                            value="<?php echo isset($_POST['mobile_phone']) ? htmlspecialchars($_POST['mobile_phone']) : ''; ?>">
-                        <small class="form-text">Format: 01X-XXXXXXX or 01X-XXXXXXXX (Malaysian format)</small>
-                    </div>
-
-                    <button type="submit" name="signup" class="btn" style="width: 100%;">Sign Up</button>
+                    <button type="submit" name="signup" class="btn" style="width: 100%; margin-top: 20px;">Sign
+                        Up</button>
                 </form>
             </div>
         </div>
