@@ -31,7 +31,7 @@
 }
 
 .card-header {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
+    background: #555555;
     color: white;
     padding: 20px 25px;
     border-radius: 15px 15px 0 0;
@@ -88,7 +88,7 @@
 
 /* Welcome Card */
 .welcome-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #555555;
     color: white;
     border: none;
 }
@@ -153,7 +153,7 @@
 .stat-number {
     font-size: 2rem;
     font-weight: bold;
-    color: #667eea;
+    color: black;
     margin-bottom: 5px;
 }
 

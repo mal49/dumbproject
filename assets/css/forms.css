@@ -91,6 +91,7 @@
 
 #signupForm .form-row .form-group {
     margin-bottom: 0;
+    width: 100%;
 }
 
 #signupForm .form-group.full-width {
@@ -99,53 +100,89 @@
 
 /* Enhanced Search Styling */
 .search-section {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid #e3e6f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.search-section:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.search-section:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .search-container-enhanced {
     display: flex;
-    gap: 15px;
-    align-items: end;
-    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 18px;
 }
 
 .search-field {
-    flex: 1;
-    min-width: 200px;
+    flex: 1 1 0;
+    min-width: 350px;
 }
 
 .search-field label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-weight: 600;
     color: #495057;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 16px;
+    display: inline-block;
+}
+
+.search-field label i {
+    margin-right: 8px;
+    color: #667eea;
 }
 
 .search-input {
     width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: white;
+    padding: 18px 22px;
+    border: 2px solid #d1d5db;
+    border-radius: 16px;
+    font-size: 1.15rem;
+    background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.07);
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder {
+    color: #a0a6b8;
+    font-style: italic;
 }
 
 .search-input:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.13), 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: #fff;
+}
+
+.search-input:hover {
+    border-color: #b8c5ea;
 }
 
 .search-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    align-items: end;
+    flex: 0 0 auto;
 }
 
 /* Form Layout Enhancements */
@@ -166,6 +203,7 @@
     .search-container-enhanced {
         flex-direction: column;
         align-items: stretch;
+        gap: 15px;
     }
     
     .search-field {
@@ -174,6 +212,14 @@
     
     .search-actions {
         justify-content: stretch;
+        margin-top: 10px;
+    }
+    
+    .search-actions .btn-search,
+    .search-actions .btn-clear {
+        flex: 1;
+        justify-content: center;
+        min-height: 48px;
     }
 }
 
@@ -183,3 +229,20 @@
         margin: 20px;
     }
 } 
+
+/* Remove or override the generic .form-row flexbox for signup form */
+#signupForm .form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* Responsive: stack columns on small screens */
+@media (max-width: 700px) {
+    #signupForm .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Keep the generic .form-row for other forms if needed */ 

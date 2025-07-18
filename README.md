@@ -132,8 +132,13 @@ course_registration/
 │       ├── cookie1.php     # Basic cookie example
 │       └── cookie2.php     # Cookie deletion example
 ├── assets/               # Frontend assets
-│   └── css/
-│       └── styles.css    # Main stylesheet
+│   └── css/              # Modular CSS structure
+│       ├── base.css      # Global foundation styles
+│       ├── components.css # Reusable UI components
+│       ├── dashboard.css  # Dashboard layouts
+│       ├── forms.css      # Form styling
+│       ├── lecturer-dashboard.css # Lecturer-specific styles
+│       └── utilities.css  # Utility classes
 ├── docs/                 # Documentation
 │   └── Lab9_Report.pdf   # Lab report
 └── README.md             # This file

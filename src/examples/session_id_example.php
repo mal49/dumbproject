@@ -38,7 +38,11 @@ $message = isset($message) ? $message : '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Session ID (SID) Example - Lab 9</title>
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <!-- CSS modules for session ID example page -->
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+    <link rel="stylesheet" href="../../assets/css/components.css">
+    <link rel="stylesheet" href="../../assets/css/utilities.css">
     <style>
         .sid-section {
             background-color: #f8f9fa;

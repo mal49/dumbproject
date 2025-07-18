@@ -38,7 +38,12 @@ if (isset($_POST['drop_course'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Courses - Course Registration System</title>
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <!-- CSS modules for my courses page -->
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+    <link rel="stylesheet" href="../../assets/css/components.css">
+    <link rel="stylesheet" href="../../assets/css/utilities.css">
 </head>
 
 <body>

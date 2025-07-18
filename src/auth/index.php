@@ -7,7 +7,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Registration System - Login</title>
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <!-- CSS modules for login/signup page -->
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+    <link rel="stylesheet" href="../../assets/css/components.css">
+    <link rel="stylesheet" href="../../assets/css/utilities.css">
 </head>
 
 <body>
@@ -276,19 +280,25 @@
                     }
 
                     // Validate faculty code
-                    $valid_faculties = ['KPPIM'];
                     if (empty($faculty_code)) {
                         $errors[] = "Faculty selection is required.";
-                    } elseif (!in_array($faculty_code, $valid_faculties)) {
-                        $errors[] = "Please select a valid faculty.";
+                    } else {
+                        $stmt = $pdo->prepare("SELECT 1 FROM faculty WHERE Faculty_code = ?");
+                        $stmt->execute([$faculty_code]);
+                        if (!$stmt->fetch()) {
+                            $errors[] = "Please select a valid faculty.";
+                        }
                     }
 
                     // Validate programme code
-                    $valid_programmes = ['CS110', 'CS230'];
                     if (empty($programme_code)) {
                         $errors[] = "Programme selection is required.";
-                    } elseif (!in_array($programme_code, $valid_programmes)) {
-                        $errors[] = "Please select a valid programme.";
+                    } else {
+                        $stmt = $pdo->prepare("SELECT 1 FROM programme WHERE Programme_code = ?");
+                        $stmt->execute([$programme_code]);
+                        if (!$stmt->fetch()) {
+                            $errors[] = "Please select a valid programme.";
+                        }
                     }
 
                     // Validate campus
@@ -390,7 +400,7 @@
                             // Clear form data after successful registration
                             $_POST = [];
                         } catch (PDOException $e) {
-                            echo '<div class="alert alert-danger">Registration failed: Database error occurred. Please try again later.</div>';
+                            echo '<div class="alert alert-danger">Registration failed: Database error occurred. Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
                         }
                     }
                 }
@@ -417,18 +427,31 @@
                     <!-- Row 2: Password and Faculty -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="password">Password:</label>
-                            <input type="password" name="password" id="password" required>
+                            <label for="signup_password">Password:</label>
+                            <input type="password" name="password" id="signup_password" required>
                             <small class="form-text">At least 6 characters with uppercase, lowercase, and number</small>
                         </div>
 
                         <div class="form-group">
                             <label for="faculty_code">Faculty:</label>
+                            <?php
+                            // Fetch all faculties from the database
+                            $faculty_options = [];
+                            try {
+                                $stmt = $pdo->query("SELECT Faculty_code, Faculty_name FROM faculty ORDER BY Faculty_code ASC");
+                                $faculty_options = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            } catch (PDOException $e) {
+                                // Handle error (optional)
+                            }
+                            ?>
                             <select name="faculty_code" required>
                                 <option value="">Select Faculty</option>
-                                <option value="KPPIM" <?php echo (isset($_POST['faculty_code']) && $_POST['faculty_code'] === 'KPPIM') ? 'selected' : ''; ?>>KPPIM - Kolej Pengajian
-                                    Pengkomputeran, Informatik dan Matematik
-                                </option>
+                                <?php foreach ($faculty_options as $fac): ?>
+                                    <option value="<?php echo htmlspecialchars($fac['Faculty_code']); ?>"
+                                        <?php echo (isset($_POST['faculty_code']) && $_POST['faculty_code'] === $fac['Faculty_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($fac['Faculty_code'] . ' - ' . $fac['Faculty_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -437,13 +460,24 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="programme_code">Programme:</label>
+                            <?php
+                            // Fetch all programmes from the database
+                            $programme_options = [];
+                            try {
+                                $stmt = $pdo->query("SELECT Programme_code, Programme_name FROM programme ORDER BY Programme_code ASC");
+                                $programme_options = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            } catch (PDOException $e) {
+                                // Handle error (optional)
+                            }
+                            ?>
                             <select name="programme_code" required>
                                 <option value="">Select Programme</option>
-                                <option value="CS110" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS110') ? 'selected' : ''; ?>>CS110 - Diploma of
-                                    Computer
-                                    Science</option>
-                                <option value="CS230" <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === 'CS230') ? 'selected' : ''; ?>>CS230 - Bachelor Degree in
-                                    Computer Science</option>
+                                <?php foreach ($programme_options as $prog): ?>
+                                    <option value="<?php echo htmlspecialchars($prog['Programme_code']); ?>"
+                                        <?php echo (isset($_POST['programme_code']) && $_POST['programme_code'] === $prog['Programme_code']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($prog['Programme_code'] . ' - ' . $prog['Programme_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 
@@ -548,7 +582,7 @@
         function validateSignupForm() {
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            const password = document.getElementById('signup_password').value;
             const postcode = document.querySelector('input[name="postcode"]').value.trim();
             const mobilePhone = document.querySelector('input[name="mobile_phone"]').value.trim();
 
@@ -601,7 +635,7 @@
 
         // Real-time validation feedback
         document.addEventListener('DOMContentLoaded', function () {
-            const passwordField = document.getElementById('password');
+            const passwordField = document.getElementById('signup_password');
             if (passwordField) {
                 passwordField.addEventListener('input', function () {
                     const password = this.value;

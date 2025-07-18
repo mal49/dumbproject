@@ -235,7 +235,12 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecturer Dashboard - Course Registration System</title>
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <!-- CSS modules for lecturer dashboard -->
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/lecturer-dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/components.css">
+    <link rel="stylesheet" href="../../assets/css/utilities.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
 </head>

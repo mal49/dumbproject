@@ -113,7 +113,12 @@ if (isset($_POST['register_course'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Course - Course Registration System</title>
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <!-- CSS modules for register course page -->
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+    <link rel="stylesheet" href="../../assets/css/components.css">
+    <link rel="stylesheet" href="../../assets/css/utilities.css">
 </head>
 
 <body>
@@ -153,35 +158,109 @@ if (isset($_POST['register_course'])) {
             <h3>Available Courses</h3>
 
             <?php
-            // Get all available courses
-            $stmt = $pdo->query("SELECT * FROM course ORDER BY course_code");
-            $courses = $stmt->fetchAll();
+            // Get student's programme code first
+            $stmt = $pdo->prepare("SELECT Programme_code, Semester FROM student WHERE Student_id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $student_info = $stmt->fetch();
+
+            if (!$student_info) {
+                echo "<p class='alert alert-danger'>Error: Student information not found.</p>";
+                exit;
+            }
+
+            $student_programme = $student_info['Programme_code'];
+            $student_semester = $student_info['Semester'];
+
+            // Get courses available for student's programme
+            // Assuming there's a programme_course table with programme_code, course_code, semester, is_core columns
+            // If this table doesn't exist, we'll join with a different approach
+            try {
+                // First, try to get courses from programme_course table (if it exists)
+                $stmt = $pdo->prepare("
+                    SELECT DISTINCT c.course_code, c.course_name, c.credit_hour, pc.semester, pc.is_core
+                    FROM course c
+                    JOIN programme_course pc ON c.course_code = pc.course_code
+                    WHERE pc.programme_code = ? AND pc.semester <= ?
+                    ORDER BY c.course_code
+                ");
+                $stmt->execute([$student_programme, $student_semester]);
+                $courses = $stmt->fetchAll();
+
+                // If no results and table might not exist, fall back to all courses
+                if (empty($courses)) {
+                    throw new PDOException("programme_course table not found");
+                }
+            } catch (PDOException $e) {
+                // Fallback: If programme_course table doesn't exist, show all courses for now
+                // You should create the programme_course table as shown in your image
+                echo "<div class='alert alert-warning'>
+                    <strong>Notice:</strong> Programme-specific course filtering is not yet implemented. 
+                    Showing all available courses. Please create the 'programme_course' table with the structure shown in your database image.
+                </div>";
+
+                $stmt = $pdo->query("SELECT course_code, course_name, credit_hour FROM course ORDER BY course_code");
+                $courses = $stmt->fetchAll();
+
+                // Add empty columns for compatibility
+                foreach ($courses as &$course) {
+                    $course['semester'] = null;
+                    $course['is_core'] = null;
+                }
+            }
             ?>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Credit Hours</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($courses as $course): ?>
+            <div class="alert alert-info" style="margin-bottom: 15px;">
+                <strong>Your Programme:</strong> <?php echo htmlspecialchars($student_programme); ?> | 
+                <strong>Current Semester:</strong> <?php echo htmlspecialchars($student_semester); ?>
+                <br><small>Only courses available for your programme and semester level are shown below.</small>
+            </div>
+
+            <?php if (empty($courses)): ?>
+                <div class="alert alert-warning">
+                    <strong>No courses available</strong> for your programme (<?php echo htmlspecialchars($student_programme); ?>) 
+                    at semester <?php echo htmlspecialchars($student_semester); ?> level.
+                    <br>Please contact your academic advisor for assistance.
+                </div>
+            <?php else: ?>
+                <table>
+                    <thead>
                         <tr>
-                            <td><?php echo htmlspecialchars($course['course_code']); ?></td>
-                            <td><?php echo htmlspecialchars($course['course_name']); ?></td>
-                            <td><?php echo htmlspecialchars($course['credit_hour']); ?></td>
-                            <td>
-                                <button
-                                    onclick="registerCourse('<?php echo $course['course_code']; ?>', '<?php echo htmlspecialchars($course['course_name']); ?>')"
-                                    class="btn btn-success">Register</button>
-                            </td>
+                            <th>Course Code</th>
+                            <th>Course Name</th>
+                            <th>Credit Hours</th>
+                            <?php if (!is_null($courses[0]['semester'])): ?>
+                                <th>Semester</th>
+                                <th>Type</th>
+                            <?php endif; ?>
+                            <th>Action</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($courses as $course): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($course['course_code']); ?></td>
+                                <td><?php echo htmlspecialchars($course['course_name']); ?></td>
+                                <td><?php echo htmlspecialchars($course['credit_hour']); ?></td>
+                                <?php if (!is_null($course['semester'])): ?>
+                                    <td><span class="badge"><?php echo htmlspecialchars($course['semester']); ?></span></td>
+                                    <td>
+                                        <?php if ($course['is_core'] == 1): ?>
+                                            <span class="badge" style="background-color: #dc3545;">Core</span>
+                                        <?php else: ?>
+                                            <span class="badge" style="background-color: #6c757d;">Elective</span>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
+                                <td>
+                                    <button
+                                        onclick="registerCourse('<?php echo $course['course_code']; ?>', '<?php echo htmlspecialchars($course['course_name']); ?>')"
+                                        class="btn btn-success">Register</button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
 
         <!-- Registration modal with pre-requisites -->
