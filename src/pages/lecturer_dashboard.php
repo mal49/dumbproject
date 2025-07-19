@@ -60,8 +60,15 @@ if (isset($_POST['delete_student']) && isset($_POST['csrf_token'])) {
     }
 }
 
+// Debug: Check if we're processing a POST request
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $info_message = "POST request detected. Action: " . ($_POST['action_request'] ?? 'NOT SET') . ", Drop ID: " . ($_POST['drop_id'] ?? 'NOT SET');
+}
+
 // Handle drop request approval/rejection with enhanced security
 if (isset($_POST['action_request']) && isset($_POST['csrf_token'])) {
+    $info_message = "Processing approval/rejection request...";
+
     if (!validateCSRF($_POST['csrf_token'])) {
         $error_message = "Security validation failed. Please try again.";
     } else {
@@ -87,14 +94,83 @@ if (isset($_POST['action_request']) && isset($_POST['csrf_token'])) {
                     $error_message = "Request not found or you don't have permission to process it.";
                 } else {
                     if ($action === 'approve') {
-                        // For approval, we should remove the student from the course
-                        $stmt = $pdo->prepare("DELETE FROM course_drop WHERE drop_id = ? AND lecturer_id = ?");
-                        $stmt->execute([$drop_id, $_SESSION['user_id']]);
-                        $success_message = "Drop request for " . $request_details['student_name'] . " (" . $request_details['course_code'] . ") approved successfully!";
+                        try {
+                            // Start transaction for data consistency
+                            $pdo->beginTransaction();
+
+                            // Get student_id from the drop request
+                            $student_stmt = $pdo->prepare("
+                                SELECT ada.student_id 
+                                FROM course_drop cd 
+                                JOIN add_drop_application ada ON cd.application_id = ada.application_id 
+                                WHERE cd.drop_id = ?
+                            ");
+                            $student_stmt->execute([$drop_id]);
+                            $student_info = $student_stmt->fetch();
+
+                            if (!$student_info) {
+                                throw new Exception("Could not find student information for this drop request.");
+                            }
+
+                            // Debug: Check if student has enrollment for this course
+                            $check_enrollment_stmt = $pdo->prepare("
+                                SELECT ca.add_id, ca.application_id 
+                                FROM course_add ca
+                                JOIN add_drop_application ada ON ca.application_id = ada.application_id
+                                WHERE ada.student_id = ? AND ca.course_code = ?
+                            ");
+                            $check_enrollment_stmt->execute([$student_info['student_id'], $request_details['course_code']]);
+                            $enrollment_records = $check_enrollment_stmt->fetchAll();
+
+                            if (empty($enrollment_records)) {
+                                throw new Exception("Student is not currently enrolled in course " . $request_details['course_code']);
+                            }
+
+                            // Remove the student's enrollment for this course
+                            $remove_enrollment_stmt = $pdo->prepare("
+                                DELETE ca FROM course_add ca
+                                JOIN add_drop_application ada ON ca.application_id = ada.application_id
+                                WHERE ada.student_id = ? AND ca.course_code = ?
+                            ");
+                            $remove_enrollment_stmt->execute([$student_info['student_id'], $request_details['course_code']]);
+
+                            $deleted_rows = $remove_enrollment_stmt->rowCount();
+
+                            if ($deleted_rows === 0) {
+                                throw new Exception("Failed to remove student enrollment from course_add table.");
+                            }
+
+                            // Remove the drop request
+                            $remove_request_stmt = $pdo->prepare("DELETE FROM course_drop WHERE drop_id = ? AND lecturer_id = ?");
+                            $remove_request_stmt->execute([$drop_id, $_SESSION['user_id']]);
+
+                            $request_deleted = $remove_request_stmt->rowCount();
+
+                            if ($request_deleted === 0) {
+                                throw new Exception("Failed to remove drop request from course_drop table.");
+                            }
+
+                            // Commit transaction
+                            $pdo->commit();
+
+                            $success_message = "Drop request for " . $request_details['student_name'] . " (" . $request_details['course_code'] . ") approved successfully! Student has been removed from the course. (Removed $deleted_rows enrollment record(s))";
+
+                        } catch (Exception $e) {
+                            // Rollback transaction on error
+                            $pdo->rollback();
+                            $error_message = "Error approving drop request: " . $e->getMessage();
+                        }
                     } elseif ($action === 'reject') {
+                        // For rejection, just remove the drop request (student stays enrolled)
                         $stmt = $pdo->prepare("DELETE FROM course_drop WHERE drop_id = ? AND lecturer_id = ?");
                         $stmt->execute([$drop_id, $_SESSION['user_id']]);
-                        $success_message = "Drop request for " . $request_details['student_name'] . " (" . $request_details['course_code'] . ") rejected successfully!";
+
+                        $deleted = $stmt->rowCount();
+                        if ($deleted > 0) {
+                            $success_message = "Drop request for " . $request_details['student_name'] . " (" . $request_details['course_code'] . ") rejected successfully! Student remains enrolled in the course.";
+                        } else {
+                            $error_message = "Error: Could not remove the drop request. It may have already been processed.";
+                        }
                     }
                 }
             } catch (PDOException $e) {
@@ -308,6 +384,13 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($info_message)): ?>
+            <div class="alert-enhanced" style="background-color: #e3f2fd; color: #1976d2; border: 1px solid #2196f3;">
+                <i class="fas fa-info-circle"></i>
+                <?php echo $info_message; ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Statistics Section -->
         <div class="dashboard-card">
             <div class="card-header">
@@ -405,8 +488,8 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                                         value="<?php echo $_SESSION['csrf_token']; ?>">
                                                     <input type="hidden" name="drop_id"
                                                         value="<?php echo $request['drop_id']; ?>">
-                                                    <button type="submit" name="action_request" value="approve"
-                                                        class="btn-enhanced btn-approve">
+                                                    <input type="hidden" name="action_request" value="approve">
+                                                    <button type="submit" class="btn-enhanced btn-approve">
                                                         <i class="fas fa-check"></i> Approve
                                                     </button>
                                                 </form>
@@ -416,8 +499,8 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                                         value="<?php echo $_SESSION['csrf_token']; ?>">
                                                     <input type="hidden" name="drop_id"
                                                         value="<?php echo $request['drop_id']; ?>">
-                                                    <button type="submit" name="action_request" value="reject"
-                                                        class="btn-enhanced btn-reject">
+                                                    <input type="hidden" name="action_request" value="reject">
+                                                    <button type="submit" class="btn-enhanced btn-reject">
                                                         <i class="fas fa-times"></i> Reject
                                                     </button>
                                                 </form>

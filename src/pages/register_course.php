@@ -15,11 +15,11 @@ if (isset($_POST['register_course'])) {
     try {
         // Check pre-requisites using the correct column name
         $stmt = $pdo->prepare("
-            SELECT cp.preequisite as prerequisite_code, c.course_name 
+            SELECT cp.prerequisite as prerequisite_code, c.course_name 
             FROM course_prerequisite cp
-            JOIN course c ON cp.preequisite = c.course_code
+            JOIN course c ON cp.prerequisite = c.course_code
             WHERE cp.course_code = ?
-            AND cp.preequisite NOT IN (
+            AND cp.prerequisite NOT IN (
                 SELECT course_code FROM passed_courses WHERE student_id = ?
             )
         ");
@@ -210,14 +210,15 @@ if (isset($_POST['register_course'])) {
             ?>
 
             <div class="alert alert-info" style="margin-bottom: 15px;">
-                <strong>Your Programme:</strong> <?php echo htmlspecialchars($student_programme); ?> | 
+                <strong>Your Programme:</strong> <?php echo htmlspecialchars($student_programme); ?> |
                 <strong>Current Semester:</strong> <?php echo htmlspecialchars($student_semester); ?>
                 <br><small>Only courses available for your programme and semester level are shown below.</small>
             </div>
 
             <?php if (empty($courses)): ?>
                 <div class="alert alert-warning">
-                    <strong>No courses available</strong> for your programme (<?php echo htmlspecialchars($student_programme); ?>) 
+                    <strong>No courses available</strong> for your programme
+                    (<?php echo htmlspecialchars($student_programme); ?>)
                     at semester <?php echo htmlspecialchars($student_semester); ?> level.
                     <br>Please contact your academic advisor for assistance.
                 </div>
