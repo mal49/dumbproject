@@ -1,6 +1,6 @@
 # Course Registration System
 
-A comprehensive web-based course registration system built with PHP, MySQL, HTML, CSS, and JavaScript for educational institutions. Enhanced with advanced cookie functionality for persistent login sessions (Lab 9 implementation).
+A comprehensive web-based course registration system built with PHP, MySQL, HTML, CSS, and JavaScript for educational institutions.
 
 ## Features
 
@@ -19,13 +19,6 @@ A comprehensive web-based course registration system built with PHP, MySQL, HTML
 - **Course Overview**: View all available courses in the system
 - **Persistent Sessions**: Automatic login using remember me functionality
 
-### Cookie Features (Lab 9)
-- **Remember Me Functionality**: Checkbox option for persistent login sessions
-- **Auto-Login**: Automatic authentication using stored cookies
-- **Cookie Security**: HTTPOnly cookies with proper expiration management
-- **Cookie Management**: Clean cookie clearing on logout
-- **Cookie Demonstration**: Interactive page for testing and viewing cookies
-
 ## Prerequisites
 
 - XAMPP (or any PHP development environment)
@@ -42,14 +35,14 @@ A comprehensive web-based course registration system built with PHP, MySQL, HTML
 
 ### 2. Project Setup
 1. Copy all project files to your XAMPP `htdocs` directory (e.g., `C:/xampp/htdocs/course_registration/`)
-2. The project is now organized in a structured directory layout:
+2. The project is organized in a structured directory layout:
    - `index.php` (root file that redirects to auth)
    - `src/auth/` (authentication files including login/logout)
    - `src/pages/` (main application pages)
    - `src/config/` (configuration files)
-   - `src/examples/` (cookie demonstration files for Lab 9)
+   - `src/utilities/` (utility classes)
+   - `src/includes/` (template includes)
    - `assets/css/` (styling files)
-   - `docs/` (documentation)
 
 ### 3. Configuration
 1. Open `src/config/config.php` and verify the database connection settings:
@@ -71,21 +64,15 @@ A comprehensive web-based course registration system built with PHP, MySQL, HTML
 ### Student Access
 1. **Registration**: Click "Sign Up" and fill in your details
 2. **Login**: Use your Student ID and password
-   - ✅ **Remember Me**: Check "Remember me for 30 days" for automatic login
+   - **Remember Me**: Check "Remember me for 30 days" for automatic login
 3. **Register for Courses**: Navigate to "Register Course" to browse and enroll
 4. **Manage Courses**: Use "My Courses" to view enrolled courses and submit drop requests
 
 ### Lecturer Access
 1. **Login**: Select "Lecturer" radio button and use lecturer credentials
-   - ✅ **Remember Me**: Check "Remember me for 30 days" for automatic login
+   - **Remember Me**: Check "Remember me for 30 days" for automatic login
 2. **Review Requests**: Check dashboard for pending drop requests
 3. **Make Decisions**: Approve or reject requests based on student information
-
-### Cookie Features Testing
-1. **Remember Me**: Login with "Remember me" checked, then logout and return
-2. **Auto-Login**: Observe automatic login when returning to the site
-3. **Cookie Demo**: Visit `/src/examples/cookie_demo.php` to view and manage cookies
-4. **Cookie Clearing**: Logout to see cookies being properly cleared
 
 ## Sample Login Credentials
 
@@ -114,23 +101,29 @@ The system comes with pre-loaded courses:
 
 ```
 course_registration/
-├── index.php              # Root redirect to organized structure
+├── index.php              # Root redirect to login
 ├── src/                   # Main application source code
 │   ├── auth/             # Authentication related files
-│   │   ├── index.php     # Main login/signup page with remember me
-│   │   └── logout.php    # Logout functionality with cookie clearing
+│   │   ├── index.php     # Main login/signup page
+│   │   └── logout.php    # Logout functionality
 │   ├── pages/            # Main application pages
 │   │   ├── dashboard.php          # Student dashboard
 │   │   ├── lecturer_dashboard.php # Lecturer interface
 │   │   ├── register_course.php    # Course registration page
 │   │   ├── my_courses.php         # Student course management
-│   │   └── about.php              # About page
+│   │   ├── about.php              # About page
+│   │   └── get_prerequisite.php   # Course prerequisite checker
 │   ├── config/           # Configuration files
 │   │   └── config.php    # Database configuration
-│   └── examples/         # Demo and example files
-│       ├── cookie_demo.php # Cookie demonstration page (Lab 9)
-│       ├── cookie1.php     # Basic cookie example
-│       └── cookie2.php     # Cookie deletion example
+│   ├── utilities/        # Utility classes
+│   │   ├── AuthManager.php        # Authentication management
+│   │   ├── CookieManager.php      # Cookie management
+│   │   ├── DatabaseManager.php    # Database operations
+│   │   └── FormValidator.php      # Form validation
+│   └── includes/         # Template includes
+│       ├── header.php    # Page header template
+│       ├── navigation.php # Navigation template
+│       └── footer.php    # Page footer template
 ├── assets/               # Frontend assets
 │   └── css/              # Modular CSS structure
 │       ├── base.css      # Global foundation styles
@@ -139,8 +132,6 @@ course_registration/
 │       ├── forms.css      # Form styling
 │       ├── lecturer-dashboard.css # Lecturer-specific styles
 │       └── utilities.css  # Utility classes
-├── docs/                 # Documentation
-│   └── Lab9_Report.pdf   # Lab report
 └── README.md             # This file
 ```
 
@@ -155,6 +146,21 @@ The system uses the following main tables:
 - `add_drop_application` - Application records
 - `course_add` - Course registration records
 - `course_drop` - Course drop requests
+
+## Architecture
+
+The application follows a modular architecture with:
+
+### Utility Classes
+- **AuthManager**: Centralized authentication and session management
+- **CookieManager**: Secure cookie handling for remember me functionality
+- **DatabaseManager**: Database abstraction layer for common operations
+- **FormValidator**: Input validation and sanitization
+
+### Template System
+- **Header/Footer**: Reusable page templates
+- **Navigation**: Dynamic role-based navigation
+- **CSS Modules**: Organized styling system
 
 ## Troubleshooting
 
@@ -178,16 +184,7 @@ The system uses the following main tables:
 4. **Cookie Issues**
    - Clear browser cookies if experiencing login problems
    - Check browser settings allow cookies
-   - Visit `/src/examples/cookie_demo.php` to view current cookie status
    - Ensure cookies are enabled in your browser
-
-### Technical Support
-
-This is a demonstration system for educational purposes. For issues:
-1. Check XAMPP services are running
-2. Verify database import was successful
-3. Review browser console for JavaScript errors
-4. Check PHP error logs in XAMPP
 
 ## System Requirements
 
@@ -196,45 +193,14 @@ This is a demonstration system for educational purposes. For issues:
 - **PHP**: Version 7.4 or higher
 - **Browser**: Modern web browser with JavaScript enabled
 
-## Lab 9 - PHP Cookies Implementation
+## Security Features
 
-This project includes a comprehensive implementation of PHP cookies for educational purposes:
-
-### What Was Implemented
-- ✅ **Remember Me checkbox** in login form
-- ✅ **Automatic login** using stored cookies
-- ✅ **Secure cookie handling** with HTTPOnly flags
-- ✅ **Cookie expiration management** (30-day persistence)
-- ✅ **Proper cookie clearing** on logout
-- ✅ **Interactive cookie demonstration** page
-
-### Key PHP Cookie Functions Used
-- `setcookie()` - Creating cookies with security settings
-- `$_COOKIE` - Reading cookie values
-- Cookie clearing using past expiration times
-
-### Testing the Cookie Features
-1. Login with "Remember me for 30 days" checked
-2. Logout and return to see automatic login
-3. Visit `/cookie_demo.php` for interactive cookie management
-4. Observe green notifications when auto-logged in
-
-### Cookie Security Features
-- HTTPOnly cookies prevent JavaScript access
-- Proper expiration times (30 days for remember me)
-- Clean cookie deletion on logout
-- Secure cookie path and domain settings
-
-## Security Notes
-
-This is a basic demonstration system. For production use, consider:
-- Implementing password hashing
-- Adding input validation and sanitization
-- Using CSRF protection
-- Implementing proper session management
-- Adding SSL/HTTPS support
-- Using secure cookie flags (Secure, SameSite)
+- **Password Hashing**: Secure password storage using PHP's password_hash()
+- **Input Validation**: Comprehensive form validation and sanitization
+- **CSRF Protection**: Cross-site request forgery protection for critical operations
+- **Secure Cookies**: HTTPOnly cookies with proper expiration management
+- **Session Management**: Secure session handling with automatic cleanup
 
 ## License
 
-This project is created for educational purposes. Feel free to use and modify as needed for learning. 
+This project is created for educational institutions. Feel free to use and modify as needed. 

@@ -184,6 +184,7 @@ if (isset($_POST['action_request']) && isset($_POST['csrf_token'])) {
 // Get search parameters
 $student_id_search = isset($_GET['student_id']) ? sanitizeInput($_GET['student_id']) : '';
 $grouped_student_search = isset($_GET['grouped_student_id']) ? sanitizeInput($_GET['grouped_student_id']) : '';
+$semester_filter = isset($_GET['semester_filter']) ? sanitizeInput($_GET['semester_filter']) : '';
 
 // Function to get drop requests
 function getDropRequests($pdo, $lecturer_id, $student_search = '')
@@ -221,8 +222,17 @@ function getDropRequests($pdo, $lecturer_id, $student_search = '')
     return $stmt->fetchAll();
 }
 
+// Function to get available semesters
+function getAvailableSemesters($pdo)
+{
+    $sql = "SELECT DISTINCT Semester FROM student ORDER BY Semester";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
 // Function to get students grouped by semester and programme
-function getGroupedStudents($pdo, $student_search = '')
+function getGroupedStudents($pdo, $student_search = '', $semester_filter = '')
 {
     $sql = "
         SELECT 
@@ -236,9 +246,20 @@ function getGroupedStudents($pdo, $student_search = '')
     ";
 
     $params = [];
+    $whereConditions = [];
+
     if (!empty($student_search)) {
-        $sql .= " WHERE s.Student_id LIKE ?";
+        $whereConditions[] = "s.Student_id LIKE ?";
         $params[] = '%' . $student_search . '%';
+    }
+
+    if (!empty($semester_filter)) {
+        $whereConditions[] = "s.Semester = ?";
+        $params[] = $semester_filter;
+    }
+
+    if (!empty($whereConditions)) {
+        $sql .= " WHERE " . implode(" AND ", $whereConditions);
     }
 
     $sql .= " ORDER BY s.Semester, p.Programme_name, s.Student_id";
@@ -300,7 +321,10 @@ function getStatistics($pdo, $lecturer_id)
 
 // Get data for display
 $drop_requests = getDropRequests($pdo, $_SESSION['user_id'], $student_id_search);
-$students_grouped = getGroupedStudents($pdo, $grouped_student_search);
+// Get students based on filter - show all if no specific semester selected via dropdown
+$show_students = isset($_GET['semester_filter']) || !empty($grouped_student_search);
+$students_grouped = $show_students ? getGroupedStudents($pdo, $grouped_student_search, $semester_filter) : [];
+$available_semesters = getAvailableSemesters($pdo);
 $statistics = getStatistics($pdo, $_SESSION['user_id']);
 ?>
 
@@ -319,6 +343,95 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
     <link rel="stylesheet" href="../../assets/css/utilities.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
+    <style>
+        /* Custom Dropdown Styles */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            position: relative;
+            min-width: 180px;
+            text-align: left;
+            padding-right: 35px !important;
+        }
+
+        .dropdown-toggle .fa-chevron-down {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-toggle.active .fa-chevron-down {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: dropdownFadeIn 0.2s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dropdown-toggle {
+                min-width: 140px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 
 <body class="lecturer-dashboard">
@@ -356,13 +469,7 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                     </div>
                 </div>
 
-                <?php if (isset($_COOKIE['remember_user_id'])): ?>
-                    <div class="auto-login-notice">
-                        <p><strong><i class="fas fa-shield-alt"></i> Auto-Login Active:</strong>
-                            You were automatically logged in using your "Remember Me" preferences!
-                            Your login details are securely stored for 30 days.</p>
-                    </div>
-                <?php endif; ?>
+
 
                 <p><i class="fas fa-tasks"></i> Manage student course drop requests and view student information from
                     this dashboard.</p>
@@ -516,15 +623,14 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
         </div>
 
         <!-- Students by Semester and Programme Section with enhanced styling -->
-        <div class="dashboard-card">
+        <div class="dashboard-card" id="students-section">
             <div class="card-header">
                 <h3><i class="fas fa-users icon"></i> Students by Semester and Programme</h3>
             </div>
             <div class="card-body">
                 <!-- Enhanced Search Form for Grouped Students -->
                 <div class="search-section">
-                    <form method="GET" action="">
-                        <input type="hidden" name="search_grouped" value="1">
+                    <form method="GET" action="" id="studentFilterForm">
                         <div class="search-container-enhanced">
                             <div class="search-field">
                                 <label for="grouped_student_search"><i class="fas fa-search"></i> Search Student by
@@ -534,12 +640,47 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                     value="<?php echo htmlspecialchars($grouped_student_search); ?>">
                             </div>
                             <div class="search-actions">
-                                <button type="submit" class="btn-search">
-                                    <i class="fas fa-search"></i> Search
-                                </button>
+                                <!-- Custom Dropdown Button -->
+                                <div class="custom-dropdown">
+                                    <button type="button" class="btn-search dropdown-toggle" id="semesterDropdownBtn">
+                                        <i class="fas fa-filter"></i>
+                                        <?php if (!empty($semester_filter)): ?>
+                                            Semester <?php echo htmlspecialchars($semester_filter); ?>
+                                        <?php elseif (isset($_GET['semester_filter'])): ?>
+                                            All Semesters
+                                        <?php else: ?>
+                                            View Students
+                                        <?php endif; ?>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="dropdown-menu" id="semesterDropdownMenu">
+                                        <div class="dropdown-item <?php echo (isset($_GET['semester_filter']) && empty($semester_filter)) ? 'active' : ''; ?>"
+                                            data-value="">
+                                            <i class="fas fa-list"></i> All Semesters
+                                        </div>
+                                        <?php foreach ($available_semesters as $semester): ?>
+                                            <div class="dropdown-item <?php echo ($semester_filter == $semester) ? 'active' : ''; ?>"
+                                                data-value="<?php echo htmlspecialchars($semester); ?>">
+                                                <i class="fas fa-calendar-alt"></i> Semester
+                                                <?php echo htmlspecialchars($semester); ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden form elements -->
+                                <input type="hidden" id="semester_filter" name="semester_filter"
+                                    value="<?php echo htmlspecialchars($semester_filter); ?>">
+
                                 <?php if (!empty($grouped_student_search)): ?>
+                                    <button type="submit" class="btn-search">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($grouped_student_search) || isset($_GET['semester_filter'])): ?>
                                     <a href="lecturer_dashboard.php" class="btn-clear">
-                                        <i class="fas fa-times"></i> Clear
+                                        <i class="fas fa-times"></i> Clear Filters
                                     </a>
                                 <?php endif; ?>
                             </div>
@@ -549,10 +690,30 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
 
                 <?php if (empty($students_grouped)): ?>
                     <div style="text-align: center; padding: 40px; color: #6c757d;">
-                        <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                        <p style="font-size: 1.1rem; margin: 0;">
-                            <?php echo !empty($grouped_student_search) ? "No students found for the search criteria." : "No students found in the system."; ?>
-                        </p>
+                        <?php if (!$show_students): ?>
+                            <i class="fas fa-calendar-alt" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <p style="font-size: 1.1rem; margin: 0;">
+                                Please select a semester from the dropdown above to view students.
+                            </p>
+                            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.7;">
+                                Use the semester filter to display students organized by programme.
+                            </p>
+                        <?php else: ?>
+                            <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <p style="font-size: 1.1rem; margin: 0;">
+                                <?php
+                                if (!empty($grouped_student_search) && !empty($semester_filter)) {
+                                    echo "No students found for the search criteria in Semester " . htmlspecialchars($semester_filter) . ".";
+                                } elseif (!empty($grouped_student_search)) {
+                                    echo "No students found for the search criteria.";
+                                } elseif (!empty($semester_filter)) {
+                                    echo "No students found in Semester " . htmlspecialchars($semester_filter) . ".";
+                                } else {
+                                    echo "No students found in the system.";
+                                }
+                                ?>
+                            </p>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <?php foreach ($students_grouped as $semester => $programmes): ?>
@@ -650,6 +811,115 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                     }
                 });
             });
+
+            // Handle filter form to maintain scroll position
+            const filterForm = document.getElementById('studentFilterForm');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function (e) {
+                    // Add anchor to maintain position
+                    const action = filterForm.getAttribute('action') || '';
+                    filterForm.setAttribute('action', action + '#students-section');
+                });
+            }
+
+            // Handle custom dropdown functionality
+            const dropdownBtn = document.getElementById('semesterDropdownBtn');
+            const dropdownMenu = document.getElementById('semesterDropdownMenu');
+            const semesterFilterInput = document.getElementById('semester_filter');
+
+            if (dropdownBtn && dropdownMenu && filterForm) {
+                // Toggle dropdown on button click
+                dropdownBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                    dropdownBtn.classList.toggle('active');
+                });
+
+                // Handle dropdown item clicks
+                const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
+                dropdownItems.forEach((item, index) => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const value = this.getAttribute('data-value');
+
+                        // Update hidden input
+                        if (semesterFilterInput) {
+                            semesterFilterInput.value = value;
+                        }
+
+                        // Update button text
+                        const icon = '<i class="fas fa-filter"></i> ';
+                        const chevron = ' <i class="fas fa-chevron-down"></i>';
+                        if (value) {
+                            dropdownBtn.innerHTML = icon + 'Semester ' + value + chevron;
+                        } else {
+                            dropdownBtn.innerHTML = icon + 'All Semesters' + chevron;
+                        }
+
+                        // Update active state
+                        dropdownItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Close dropdown
+                        dropdownMenu.classList.remove('show');
+                        dropdownBtn.classList.remove('active');
+
+                        // Add anchor to maintain position and submit form
+                        const action = filterForm.getAttribute('action') || '';
+                        const cleanAction = action.split('#')[0];
+                        filterForm.setAttribute('action', cleanAction + '#students-section');
+                        filterForm.submit();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        if (dropdownMenu.classList.contains('show')) {
+                            dropdownMenu.classList.remove('show');
+                            dropdownBtn.classList.remove('active');
+                        }
+                    }
+                });
+
+                // Close dropdown on escape key
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && dropdownMenu.classList.contains('show')) {
+                        dropdownMenu.classList.remove('show');
+                        dropdownBtn.classList.remove('active');
+                    }
+                });
+            }
+
+            // Handle clear filters button to maintain scroll position
+            const clearButton = document.querySelector('.btn-clear');
+            if (clearButton) {
+                clearButton.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    // Navigate to clear page with anchor
+                    window.location.href = 'lecturer_dashboard.php#students-section';
+                });
+            }
+
+            // Auto-scroll to students section if filters are applied or coming from clear
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasFilters = urlParams.get('semester_filter') || urlParams.get('grouped_student_id');
+            const hasAnchor = window.location.hash === '#students-section';
+
+            if (hasFilters || hasAnchor) {
+                setTimeout(() => {
+                    const studentsSection = document.querySelector('#students-section');
+                    if (studentsSection) {
+                        studentsSection.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }, 100);
+            }
 
             // Auto-hide alerts after 5 seconds
             const alerts = document.querySelectorAll('.alert-enhanced');

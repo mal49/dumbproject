@@ -224,7 +224,7 @@ if (isset($_POST['register_course'])) {
                 </div>
             <?php else: ?>
                 <table>
-                    <thead>
+                    <thead style="color: white;">
                         <tr>
                             <th>Course Code</th>
                             <th>Course Name</th>
