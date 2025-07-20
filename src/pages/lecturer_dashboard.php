@@ -349,6 +349,30 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
             position: relative;
             display: inline-block;
         }
+        
+        /* Filter controls styles */
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .filter-controls .btn {
+            background-color: #555555;
+            border-color: #555555;
+            color: white;
+            border-radius: 20px;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-controls .btn:hover {
+            background-color: #444444;
+            border-color: #444444;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
 
         .dropdown-toggle {
             position: relative;
@@ -538,12 +562,12 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                     placeholder="Enter student ID to search..."
                                     value="<?php echo htmlspecialchars($student_id_search); ?>">
                             </div>
-                            <div class="search-actions">
-                                <button type="submit" class="btn-search">
+                            <div class="search-actions filter-controls">
+                                <button type="submit" class="btn btn-secondary">
                                     <i class="fas fa-search"></i> Search
                                 </button>
                                 <?php if (!empty($student_id_search)): ?>
-                                    <a href="lecturer_dashboard.php" class="btn-clear">
+                                    <button type="button" class="btn btn-secondary" onclick="window.location.href='lecturer_dashboard.php'">
                                         <i class="fas fa-times"></i> Clear
                                     </a>
                                 <?php endif; ?>
@@ -639,10 +663,10 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                     class="search-input" placeholder="Enter student ID to search..."
                                     value="<?php echo htmlspecialchars($grouped_student_search); ?>">
                             </div>
-                            <div class="search-actions">
+                            <div class="search-actions filter-controls">
                                 <!-- Custom Dropdown Button -->
                                 <div class="custom-dropdown">
-                                    <button type="button" class="btn-search dropdown-toggle" id="semesterDropdownBtn">
+                                    <button type="button" class="btn btn-secondary dropdown-toggle" id="semesterDropdownBtn">
                                         <i class="fas fa-filter"></i>
                                         <?php if (!empty($semester_filter)): ?>
                                             Semester <?php echo htmlspecialchars($semester_filter); ?>
@@ -673,15 +697,15 @@ $statistics = getStatistics($pdo, $_SESSION['user_id']);
                                     value="<?php echo htmlspecialchars($semester_filter); ?>">
 
                                 <?php if (!empty($grouped_student_search)): ?>
-                                    <button type="submit" class="btn-search">
+                                    <button type="submit" class="btn btn-secondary">
                                         <i class="fas fa-search"></i> Search
                                     </button>
                                 <?php endif; ?>
                                 
                                 <?php if (!empty($grouped_student_search) || isset($_GET['semester_filter'])): ?>
-                                    <a href="lecturer_dashboard.php" class="btn-clear">
+                                    <button type="button" class="btn btn-secondary" onclick="window.location.href='lecturer_dashboard.php'">
                                         <i class="fas fa-times"></i> Clear Filters
-                                    </a>
+                                    </button>
                                 <?php endif; ?>
                             </div>
                         </div>

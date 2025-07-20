@@ -4,12 +4,39 @@ require_once '../config/config.php';
 // Use simplified authentication check
 AuthManager::requireAuth('student');
 
+// Handle drop request cancellation
+if (isset($_POST['cancel_drop'])) {
+    try {
+        $stmt = $pdo->prepare("
+            DELETE ada, cd 
+            FROM add_drop_application ada 
+            JOIN course_drop cd ON ada.application_id = cd.application_id 
+            WHERE ada.student_id = ? AND cd.course_code = ?
+        ");
+        $stmt->execute([$_SESSION['user_id'], $_POST['course_code']]);
+        $success_message = "Drop request cancelled successfully!";
+    } catch (PDOException $e) {
+        $error_message = "Failed to cancel drop request: " . $e->getMessage();
+    }
+}
+
 // Handle course drop request
 if (isset($_POST['drop_course'])) {
     $validator = new FormValidator();
 
-    // Validate input
-    if ($validator->validateDropRequest($_POST)) {
+    // Check if student already has a pending drop request for this course
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM add_drop_application ada 
+        JOIN course_drop cd ON ada.application_id = cd.application_id 
+        WHERE ada.student_id = ? AND cd.course_code = ?
+    ");
+    $stmt->execute([$_SESSION['user_id'], $_POST['course_code']]);
+    $existingRequest = $stmt->fetchColumn();
+
+    if ($existingRequest > 0) {
+        $error_message = "You already have a pending drop request for this course.";
+    } else if ($validator->validateDropRequest($_POST)) {
         try {
             // Use simplified database methods
             $applicationId = $dbManager->createApplication($_SESSION['user_id']);
@@ -115,7 +142,7 @@ include '../includes/navigation.php';
             <p>No pending drop requests.</p>
         <?php else: ?>
             <table>
-                <thead>
+                <thead style="color: white;">
                     <tr>
                         <th>Course Code</th>
                         <th>Course Name</th>
@@ -133,7 +160,13 @@ include '../includes/navigation.php';
                             <td><?php echo htmlspecialchars($request['Reasons']); ?></td>
                             <td><?php echo htmlspecialchars($request['lecturer_name']); ?></td>
                             <td><?php echo htmlspecialchars($request['application_date']); ?></td>
-                            <td><span style="color: orange;">Pending</span></td>
+                            <td>
+                                <span style="color: orange;">Pending</span>
+                                <form method="POST" style="display: inline-block; margin-left: 10px;">
+                                    <input type="hidden" name="course_code" value="<?php echo htmlspecialchars($request['course_code']); ?>">
+                                    <button type="submit" name="cancel_drop" class="btn btn-secondary" style="padding: 2px 8px;" onclick="return confirm('Are you sure you want to cancel this drop request?')">Cancel</button>
+                                </form>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
