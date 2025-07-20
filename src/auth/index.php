@@ -327,7 +327,7 @@ include '../includes/header.php';
                     <div class="form-group">
                         <label for="mailing_address">Mailing Address:</label>
                         <textarea name="mailing_address" id="mailing_address" rows="3" required
-                            placeholder="Enter your complete mailing address..."><?php echo isset($_POST['mailing_address']) ? htmlspecialchars($_POST['mailing_address']) : ''; ?></textarea>
+                            placeholder="Enter your complete mailing address..." style="width: 100%; height: 100px;"><?php echo isset($_POST['mailing_address']) ? htmlspecialchars($_POST['mailing_address']) : ''; ?></textarea>
 
                     </div>
                     <div class="form-group">
@@ -343,7 +343,7 @@ include '../includes/header.php';
                     <div class="form-group">
                         <label for="mobile_phone">Mobile Phone:</label>
                         <input type="tel" name="mobile_phone" id="mobile_phone" required
-                            value="<?php echo isset($_POST['mobile_phone']) ? htmlspecialchars($_POST['mobile_phone']) : ''; ?>">
+                            value="<?php echo isset($_POST['mobile_phone']) ? htmlspecialchars($_POST['mobile_phone']) : ''; ?>" style="width: 100%; padding: 12px 15px; border-radius: 5px; border: 1px solid #ddd; box-sizing: box-border; font-family: inherit; font-size: 16px;">
 
                     </div>
                 </div>

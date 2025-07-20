@@ -61,7 +61,7 @@ include '../includes/navigation.php';
             <a href="register_course.php" class="btn">Register for Courses</a>
         <?php else: ?>
             <table>
-                <thead>
+                <thead style="color: white;">
                     <tr>
                         <th>Course Code</th>
                         <th>Course Name</th>

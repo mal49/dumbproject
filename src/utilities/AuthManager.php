@@ -61,7 +61,12 @@ class AuthManager
         $stmt->execute([$userId]);
         $lecturer = $stmt->fetch();
 
-        if (!$lecturer || $password !== 'lecturer123') {
+        if (!$lecturer) {
+            return ['success' => false, 'message' => 'Lecturer not found'];
+        }
+
+        // Check if lecturer has a password field and validate it
+        if (!isset($lecturer['password']) || !$this->validateLecturerPassword($password, $lecturer['password'], $lecturer['lecturer_id'])) {
             return ['success' => false, 'message' => 'Invalid lecturer credentials'];
         }
 
@@ -91,6 +96,28 @@ class AuthManager
             $hashedPassword = password_hash($inputPassword, PASSWORD_DEFAULT);
             $stmt = $this->pdo->prepare("UPDATE student SET password = ? WHERE Student_id = ?");
             $stmt->execute([$hashedPassword, $studentId]);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Validate lecturer password and handle migration from plain text to hashed
+     */
+    private function validateLecturerPassword($inputPassword, $storedPassword, $lecturerId)
+    {
+        // Check if password is hashed (new accounts)
+        if (password_verify($inputPassword, $storedPassword)) {
+            return true;
+        }
+
+        // Check if it's a plain text password (old accounts)
+        if ($storedPassword === $inputPassword) {
+            // Migrate to hashed password for security
+            $hashedPassword = password_hash($inputPassword, PASSWORD_DEFAULT);
+            $stmt = $this->pdo->prepare("UPDATE lecturer SET password = ? WHERE lecturer_id = ?");
+            $stmt->execute([$hashedPassword, $lecturerId]);
             return true;
         }
 

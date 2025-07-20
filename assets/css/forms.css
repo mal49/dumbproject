@@ -25,12 +25,16 @@
 .form-group input[type="email"],
 .form-group input[type="password"],
 .form-group input[type="number"],
+.form-group input[type="tel"],
+.form-group textarea,
 .form-group select {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
 /* Radio Button Groups */
@@ -67,17 +71,20 @@
 
 /* Enhanced Form Styling */
 .form-group input:focus,
+.form-group textarea:focus,
 .form-group select:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.form-group input.is-valid {
+.form-group input.is-valid,
+.form-group textarea.is-valid {
     border-color: #28a745;
 }
 
-.form-group input.is-invalid {
+.form-group input.is-invalid,
+.form-group textarea.is-invalid {
     border-color: #dc3545;
 }
 
