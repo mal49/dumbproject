@@ -7,6 +7,54 @@ class DatabaseManager
 {
     private $pdo;
 
+    /**
+     * Gets the student details by ID
+     */
+    public function getStudentDetails($studentId) {
+        $query = "SELECT 
+            Student_id,
+            Name as name,
+            Faculty_code as faculty_code,
+            Campus as campus,
+            Gender as gender,
+            Level_of_study as level_of_study,
+            Mode_of_study as mode_of_study,
+            mailing_address,
+            Postcode as postcode,
+            mobile_phone_no,
+            email
+        FROM student WHERE Student_id = ?";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([$studentId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Updates student profile information
+     */
+    public function updateStudentProfile($studentId, $data) {
+        $query = "UPDATE student SET 
+            Name = ?,
+            Faculty_code = ?,
+            Campus = ?,
+            mailing_address = ?,
+            Postcode = ?,
+            mobile_phone_no = ?,
+            email = ?
+        WHERE Student_id = ?";
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute([
+            $data['name'],
+            $data['faculty_code'],
+            $data['campus'],
+            $data['mailing_address'],
+            $data['postcode'],
+            $data['mobile_phone_no'],
+            $data['email'],
+            $studentId
+        ]);
+    }
+
     public function __construct($pdo)
     {
         $this->pdo = $pdo;

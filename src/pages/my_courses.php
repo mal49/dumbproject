@@ -49,11 +49,15 @@ include '../includes/navigation.php';
     <?php endif; ?>
 
     <div class="card">
-        <h3>Currently Registered Courses</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Currently Registered Courses</h3>
+            <?php if (!empty($registered_courses = $dbManager->getStudentRegisteredCourses($_SESSION['user_id']))): ?>
+                <button onclick="printCourses()" class="btn btn-primary">Print Course List</button>
+            <?php endif; ?>
+        </div>
 
         <?php
-        // Use simplified database method
-        $registered_courses = $dbManager->getStudentRegisteredCourses($_SESSION['user_id']);
+        // Courses are already fetched above
         ?>
 
         <?php if (empty($registered_courses)): ?>
@@ -204,6 +208,83 @@ include '../includes/navigation.php';
         if (event.target === modal) {
             closeDropModal();
         }
+    }
+</script>
+
+<style media="print">
+    @page {
+        size: A4;
+        margin: 2cm;
+    }
+    .container > *:not(#printArea),
+    .btn,
+    nav,
+    footer {
+        display: none !important;
+    }
+    #printArea {
+        display: block !important;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2 !important;
+        color: black !important;
+    }
+    .print-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .print-date {
+        text-align: right;
+        margin-bottom: 20px;
+    }
+</style>
+
+<!-- Hidden print area -->
+<div id="printArea" style="display: none;">
+    <div class="print-header">
+        <h2>Course Registration System</h2>
+        <h3>Registered Courses List</h3>
+    </div>
+    <div class="print-date">
+        <p>Date: <?php echo date('F d, Y'); ?></p>
+        <p>Student ID: <?php echo htmlspecialchars($_SESSION['user_id']); ?></p>
+    </div>
+</div>
+
+<script>
+    function printCourses() {
+        // Copy the courses table to the print area
+        const printArea = document.getElementById('printArea');
+        const courseTable = document.querySelector('.card table').cloneNode(true);
+        
+        // Remove the "Action" column
+        const headers = courseTable.querySelectorAll('th');
+        const lastHeader = headers[headers.length - 1];
+        if (lastHeader.textContent.trim() === 'Action') {
+            headers[headers.length - 1].remove();
+            const rows = courseTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.deleteCell(-1);
+            });
+        }
+        
+        // Add the table to the print area
+        if (printArea.querySelector('table')) {
+            printArea.removeChild(printArea.querySelector('table'));
+        }
+        printArea.appendChild(courseTable);
+        
+        // Print the document
+        window.print();
     }
 </script>
 

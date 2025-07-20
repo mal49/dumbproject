@@ -46,6 +46,13 @@ include '../includes/navigation.php';
                 <p>Learn more about this system</p>
             </a>
         </div>
+
+        <div class="menu-item">
+            <a href="update_profile.php">
+                <h3>👤 Update Profile</h3>
+                <p>Update your personal information</p>
+            </a>
+        </div>
     </div>
 
     <div class="card mt-20">
